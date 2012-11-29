@@ -18,7 +18,7 @@ public class InputNeuron implements Neuron {
     // The initial input value.
     private double input;
     // The action potential to send to other neurons.
-    private double output;
+    private double actionPotential;
 
     // Initialise everything to "zero".
     public InputNeuron() {
@@ -29,7 +29,7 @@ public class InputNeuron implements Neuron {
 
         // The input and output will both be zero.
         this.input = 0.0;
-        this.output = 0.0;
+        this.actionPotential = 0.0;
     }
 
     /**
@@ -60,17 +60,37 @@ public class InputNeuron implements Neuron {
 
         // Initialise input and output.
         this.input = input;
-        this.output = 0.0;
+        this.actionPotential = 0.0;
     }
 
     /*
      *
      */
-     public Axon connect(Neuron other) { return new Axon(); }
-     public void disconnect(Neuron other) {}
-     public boolean sendActionPotentialTo(Neuron postSynaptic) { return postSynaptic.receiveActionPotentialFrom(this, output); }
-     public boolean receiveActionPotentialFrom(Neuron preSynaptic,
-                                           double actionPotential) { return preSynaptic.sendActionPotentialTo(this); }
-    public double evaluate(double oldActionPotential) { return output; }
+	public Axon connect(Neuron other) {
+		return new Axon();
+	}
+
+	public void disconnect(Neuron other) {
+	}
+
+	public boolean sendActionPotentialTo() {
+		
+		double potential = this.evaluate(actionPotential);
+		for(Axon axon : axons)
+		{
+			axon.sendActionPotential(potential);
+		}
+		return true;
+	}
+
+	public boolean receiveActionPotentialFrom(Neuron preSynaptic,
+			double actionPotential) {
+		this.actionPotential += actionPotential;
+		return true;
+	}
+
+	public double evaluate(double oldActionPotential) {
+		return actionPotential;
+	}
 }
 

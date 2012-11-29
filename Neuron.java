@@ -44,7 +44,7 @@ public interface Neuron {
      * received the action potential. If nothing is received, however, false
      * will be returned.
      */
-    public boolean sendActionPotentialTo(Neuron postSynaptic);
+    public boolean sendActionPotentialTo();
 
     /**
      * Receives an action potential (a "signal") sent by another neuron. (When

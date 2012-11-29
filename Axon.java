@@ -17,6 +17,8 @@ public class Axon {
     private Neuron postSynaptic;
     // The actual action potential sent by the pre-synaptic neuron.
     private double actionPotential;
+    
+    private double scale;
 
     // Initialises everything to "zero".
     public Axon() {
@@ -118,5 +120,18 @@ public class Axon {
         // Set the new action potential.
         this.actionPotential = newActionPotential;
     }
+
+    /**
+     * Sends a weighted signal to the neuron it is connected to.
+     * 
+     * Preconditions: None
+     * Postconditions: The neuron this axon is connected to will receive a
+     * signal based on the preSynaptic neurons output and weight of the axon
+     */
+	public void sendActionPotential(double potential) 
+	{
+		this.getPostSynapticNeuron().receiveActionPotentialFrom(preSynaptic, 
+				potential*scale);
+	}
 }
 
