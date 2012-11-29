@@ -29,6 +29,9 @@ public class NeuralNetDriver {
         // The file with the data that will be analyzed by the ANN.
         FileIO file = null;
 
+        // The neural network that will be trained.
+        NeuralNetwork ann = null;
+        
         // A prompt to the user.
         String prompt = "";
 
@@ -43,6 +46,7 @@ public class NeuralNetDriver {
             file = getFileForInput(args[0]);
 
             if (file != null) {
+                usrInput = args[0];
                 done = true;
             }
         }
@@ -63,7 +67,166 @@ public class NeuralNetDriver {
             // Open the specified file.
             else {
                 file = getFileForInput(usrInput);
+
+                if (file != null) {
+                    done = true;
+                }
             }
+        }
+
+        if (file != null) {
+            // Confirm that the file was opened.
+            System.out.println("\n" + usrInput + " was opened.");
+        }
+
+        // Process the file.
+        ann = processFile(file);
+
+        if (ann != null) {
+            System.out.println("\nNetwork created.\n");
+        }
+        else {
+            System.out.println("\nThere are errors in the input file, network could not be created.\n");
+        }
+    }
+
+    /**
+     * Returns a NeuralNetwork setup with the information gathered from the
+     * file object that is passed in.
+     * Preconditions: The file object must not be null. And the file must be
+     * formatted as follows:
+     * filename_with_data.ext
+     * number_of_hidden_layers
+     * number_of_nodes_in_hidden_layer_1
+     * number_of_nodes_in_hidden_layer_2
+     * number_of_nodes_in_hidden_layer_3
+     *        ...
+     * number_of_nodes_in_hidden_layer_n (where n is the number of hidden layers)
+     * learning_rate
+     * error_tolerance
+     *
+     * Postconditions: A new NeuralNetwork object will be returned.
+     */
+    public static NeuralNetwork processFile(FileIO file) {
+        // 
+        if (file == null) {
+            // Do not continue.
+            return null;
+        }
+        else {
+            // The learning rate.
+            double rate = 0.0;
+
+            // The error tolerance.
+            double error = 0.0;
+
+            // Holds the number of hidden layers.
+            int numHiddenLayers = 0;
+
+            // An array with the number of nodes in numHiddenLayers number of
+            // hidden layers.
+            int[] numNodes;
+
+            // Holds the value of the strings read from the file.
+            String line = null;
+
+            // Get the name of the file with the data in it.
+            line = file.readLine();
+
+            // Open the data file.
+            FileIO data = getFileForInput(line);
+
+            // If the file could not be opened, let the user know and quit.
+            if (data == null) {
+                System.out.println("\n" + line + " could not be opened.");
+                return null;
+            }
+
+            // Get the number of hidden layers, or nodes-per-hidden layer.
+            line = file.readLine();
+
+            // Convert the value to a number.
+            try {
+                numHiddenLayers = Integer.parseInt(line);
+
+                if (numHiddenLayers < 1) {
+                    System.out.println("\nThere must be at least one hidden layer.");
+                    return null;
+                }
+
+                // Create the numNodes array.
+                numNodes = new int[numHiddenLayers];
+            }
+            catch (NumberFormatException nfe) {
+                System.out.println("\n" + line + " is not a valid integer.");
+                return null;
+            }
+
+            // Get numHiddenLayers number of nodes-per-layer.
+            for (int i = 0; i < numHiddenLayers; i++) {
+                // Get the number of nodes in the i-th hidden layer.
+                line = file.readLine();
+
+                // Convert the value to an integer.
+                try {
+                    numNodes[i] = Integer.parseInt(line);
+
+                    if (numNodes[i] < 1) {
+                        System.out.println("\nThere must be at least one node in a hidden layer.");
+                        return null;
+                    }
+                }
+                catch (NumberFormatException nfe) {
+                    System.out.println("\n" + line + " is not a valid integer.");
+                    return null;
+                }
+            }
+
+            // Get the learning rate.
+            line = file.readLine();
+
+            // Convert the value to a double.
+            try {
+                if (line != null) {
+                    rate = Double.parseDouble(line);
+                }
+                else {
+                    throw new NumberFormatException(line);
+                }
+
+                if (rate < 0) {
+                    System.out.println("\nThe learning rate provided (" + rate + ") is invalid.");
+                    return null;
+                }
+            }
+            catch (NumberFormatException nfe) {
+                System.out.println("\n" + line + " is not a valid double.");
+                return null;
+            }
+            
+            // Get the learning rate.
+            line = file.readLine();
+
+            // Convert the value to a double.
+            try {
+                if (line != null) {
+                    error = Double.parseDouble(line);
+                }
+                else {
+                    throw new NumberFormatException(line);
+                }
+
+                if (error < 0) {
+                    System.out.println("\nThe learning rate provided (" + rate + ") is invalid.");
+                    return null;
+                }
+            }
+            catch (NumberFormatException nfe) {
+                System.out.println("\n" + line + " is not a valid double.");
+                return null;
+            }
+
+            return new NeuralNetwork(data, numHiddenLayers, numNodes, rate, error);
         }
     }
 
