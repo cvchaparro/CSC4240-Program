@@ -6,6 +6,7 @@ public class NeuralNetwork
 {
 	List<Neuron> inputNeurons;
 	List<Neuron> outputNeurons;
+	List<List<Neuron>> hiddenNeurons;
 	
 	public NeuralNetwork(int numInput, int numOutput, int numHiddenLayers, List<Integer> numNeuronsPerHiddenLayer)
 	{
@@ -21,6 +22,7 @@ public class NeuralNetwork
 			outputNeurons.add(new OutputNeuron());
 		}
 		
+		hiddenNeurons = new ArrayList<List<Neuron>>();
 		List<Neuron> prevLayer = inputNeurons;
 		for(int n = 0; n < numHiddenLayers; n++)
 		{
@@ -37,6 +39,7 @@ public class NeuralNetwork
 					prevLayer.get(m).connect(currLayer.get(l));
 				}
 			}
+			hiddenNeurons.add(currLayer);
 			prevLayer = currLayer;
 		}
 		
