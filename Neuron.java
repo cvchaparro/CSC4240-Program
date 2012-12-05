@@ -19,19 +19,20 @@ public interface Neuron {
      *
      * Preconditions: None.
      * Postconditions: If the neurons are already connected to each other, this
-     * function will not do anything. If they are not connected, a new
-     * connection will be created and returned.
+     * function will not do anything and return false. If they are not connected
+     * a new connection will be created and true will be returned.
      */
-    public Axon connect(Neuron other);
+    public boolean connect(Neuron other);
 
     /**
      * Disconnect two neurons from each other.
      *
      * Preconditions: The neurons must already be connnected to each other.
      * Also, the neurons cannot be the same.
-     * Postconditions: The neurons will be disconnected.
+     * Postconditions: The neurons will be disconnected. True will be returned
+     * if the 'disconnection' is successful; false otherwise.
      */
-    public void disconnect(Neuron other);
+    public boolean disconnect(Neuron other);
 
     /**
      * Sends an action potential (a "signal") to the specified, connected,
@@ -55,11 +56,10 @@ public interface Neuron {
      * Postconditions: True will be returned upon completion of processing the
      * action potential. If any type of error occurs, false will be returned.
      */
-    public boolean receiveActionPotentialFrom(Neuron preSynaptic,
-                                              double actionPotential);
+    public boolean receiveActionPotentialFrom(double actionPotential);
 
     /**
-     * Evaluates <something> using a sigmoid function.
+     * Evaluates the Neuron's action potential using an activation function.
      *
      * Preconditions: The old action potential value must be scaled to be in
      * the interval: [0, 1].
@@ -69,5 +69,23 @@ public interface Neuron {
      * using the sigmoid function.
      */
     public double evaluate(double oldActionPotential);
-}
 
+    /**
+     * Sets the neuron's weight. Used during the execution of the learning
+     * algorithm.
+     *
+     * Preconditions: None.
+     * Postconditions: The neuron's weight will be updated with the new value
+     * specified by the user.
+     */
+    public void setWeight(double weight);
+
+    /**
+     * Returns the neuron's weight. Used during the execution of the learning
+     * algorithm.
+     *
+     * Preconditions: None.
+     * Postconditions: The neuron's weight will be returned.
+     */
+    public double getWeight();
+}

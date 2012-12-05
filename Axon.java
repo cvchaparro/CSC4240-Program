@@ -17,7 +17,8 @@ public class Axon {
     private Neuron postSynaptic;
     // The actual action potential sent by the pre-synaptic neuron.
     private double actionPotential;
-    
+    // The scale factor that is used to scale the action potential to give it a
+    // value between 0.0 and 1.0.
     private double scale;
 
     // Initialises everything to "zero".
@@ -36,15 +37,11 @@ public class Axon {
      * Postconditions: If no errors are detected, a new Axon object will be
      * initialsed.
      */
-    public Axon(Neuron preSynaptic, Neuron postSynaptic,
-                                    double actionPotential) {
+    public Axon(Neuron preSynaptic, Neuron postSynaptic, double actionPotential) {
         //// --- BEGIN ERROR CHECKING --- ////
         // Do either preSynaptic or postSynaptic equal null?
         if (preSynaptic == null || postSynaptic == null) {
-            String error = "Pre-Synaptic or Post-Synaptic Neurons cannot be";
-            error += "null.";
-
-            System.out.println(error);
+            System.out.println("Pre-Synaptic or Post-Synaptic Neurons cannot be null.");
 
             return;
         }
@@ -52,10 +49,7 @@ public class Axon {
         // Are the preSynaptic and postSynaptic neurons physically equal (i.e.
         // do the have the same memory address)?
         if (preSynaptic == postSynaptic) {
-            String error = "Pre-Synaptic and Post-Synaptic Neurons cannot be";
-            error += "equal.";
-
-            System.out.println(error);
+            System.out.println("Pre-Synaptic and Post-Synaptic Neurons cannot be equal.");
 
             return;
         }
@@ -124,14 +118,12 @@ public class Axon {
     /**
      * Sends a weighted signal to the neuron it is connected to.
      * 
-     * Preconditions: None
+     * Preconditions: None.
      * Postconditions: The neuron this axon is connected to will receive a
-     * signal based on the preSynaptic neurons output and weight of the axon
+     * signal based on the preSynaptic neurons output and weight of the axon.
      */
-	public void sendActionPotential(double potential) 
-	{
-		this.getPostSynapticNeuron().receiveActionPotentialFrom(preSynaptic, 
-				potential*scale);
-	}
+    public void sendActionPotential(double potential) {
+        this.getPostSynapticNeuron().receiveActionPotentialFrom(potential*scale);
+    }
 }
 

@@ -1,35 +1,117 @@
+/**
+ * This file contains the HiddenNeuron class which is, in a sense, an equivalent
+ * of a root node in a tree. Input neurons are the ones which, as the name
+ * suggests, get input but the input is the original data itself.
+ *
+ * Name: Cameron Vincent Chaparro.
+ * Date: 23 November 2012
+ */
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class HiddenNeuron implements Neuron {
+    // The activation function that will be used to determine when to send an
+    // action potential to the neurons connected to this neuron.
+    private Activation activation;
+    // A list of Neurons that we are connected to.
+    private List<Neuron> connected;
+    // A list of Axons we have between other neurons and ourselves.
+    private List<Axon> axons;
+    // The action potential to send to other neurons.
+    private double actionPotential;
+    // The bias input value.
+    private double bias;
+    // The initial input value.
+    private double input;
+    // The weight for this neuron.
+    private double weight;
 
-	@Override
-	public Axon connect(Neuron other) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    // Initialise everything to "zero".
+    public HiddenNeuron() {
+        // Actually for the lists we will create them but, obviously, not put
+        // anything in them yet.
+        this.connected = new ArrayList<Neuron>();
+        this.axons = new ArrayList<Axon>();
 
-	@Override
-	public void disconnect(Neuron other) {
-		// TODO Auto-generated method stub
+        // The input and output will both be zero.
+        this.bias = 0.0;
+        this.input = 0.0;
+        this.weight = 0.0;
+        this.actionPotential = 0.0;
+    }
 
-	}
+    /**
+     * Initialise all instance variables to the values of the specified
+     * parameters.
+     *
+     * Preconditions: None.
+     * Postconditions: A new HiddenNeuron object will be initialsed.
+     */
+    public HiddenNeuron(List<Neuron> connected, List<Axon> axons, Activation activation, double input, double bias, double weight) {
+        //// --- BEGIN ERROR CHECKING --- ////
+        // Is the connected list equal to null?
+        if (connected == null) {
+            this.connected = new ArrayList<Neuron>();
+        }
+        else {
+            this.connected = connected;
+        }
 
-	@Override
-	public boolean sendActionPotentialTo() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+        // Is the axons list equal to null?
+        if (axons == null) {
+            this.axons = new ArrayList<Axon>();
+        }
+        else {
+            this.axons = axons;
+        }
 
-	@Override
-	public boolean receiveActionPotentialFrom(Neuron preSynaptic,
-			double actionPotential) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+        // Is the activation null?
+        if (activation == null) {
+            this.activation = new Sigmoid();
+        }
+        else {
+            this.activation = activation;
+        }
+        //// --- END ERROR CHECKING --- ////
 
-	@Override
-	public double evaluate(double oldActionPotential) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+        // Initialise bias, input and actionPotential.
+        this.bias = bias;
+        this.input = input;
+        this.weight = weight;
+        this.actionPotential = 0.0;
+    }
 
+    public boolean connect(Neuron other) {
+        return (axons.add(new Axon(this, other, actionPotential)));
+    }
+
+    public boolean disconnect(Neuron other) {
+        return (axons.remove(other));
+    }
+
+    public boolean sendActionPotentialTo() {
+        double potential = this.evaluate(actionPotential);
+        for(Axon axon : axons) {
+            axon.sendActionPotential(potential);
+        }
+        return true;
+    }
+
+    public boolean receiveActionPotentialFrom(double actionPotential) {
+        this.actionPotential += actionPotential;
+        return true;
+    }
+
+    public double evaluate(double oldActionPotential) {
+        return actionPotential;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
 }
