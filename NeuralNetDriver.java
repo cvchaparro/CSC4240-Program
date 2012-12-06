@@ -87,10 +87,10 @@ public class NeuralNetDriver {
             ann = parseInitFile(file);
 
             if (ann != null) {
-                System.out.println("\nNetwork created.\n");
+                System.out.println("The network was created successfully.");
             }
             else {
-                System.out.println("\nThere are errors in the input file, network could not be created.\n");
+                System.out.println("The network could not be created.");
             }
         }
     }
@@ -198,7 +198,9 @@ public class NeuralNetDriver {
                 return null;
             }
 
-            return (new NeuralNetwork(parseDataFile(data), numHiddenLayers, numNodes, rate, error));
+            NeuralNetwork network = new NeuralNetwork(parseDataFile(data), numHiddenLayers, numNodes, rate, error);
+
+            return network;
         }
     }
 

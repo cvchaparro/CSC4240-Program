@@ -1,6 +1,18 @@
+/**
+ * This file contains the NeuralNetwork class.
+ *
+ * Authors: Cameron Chaparro.
+ *          Keith Manning.
+ * Date: 3 December 2012
+ */
+
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.Math;
 
+/**
+ * The NeuralNetwork class is responsible for implementing the learning algorithm.
+ */
 public class NeuralNetwork {
     private List<Neuron> inputNeurons;
     private List<Neuron> outputNeurons;
@@ -59,18 +71,28 @@ public class NeuralNetwork {
                         currLayer.add(new HiddenNeuron());
                     }
 
+                    // Connect the previous layer of neurons to the current
+                    // layer of hidden neurons.
                     for(int m = 0; m < prevLayer.size(); m++) {
                         for(int l = 0; l < currLayer.size(); l++) {
-                            prevLayer.get(m).connect(currLayer.get(l));
+                            Axon axon = new Axon(prevLayer.get(m), currLayer.get(l));
+                            currLayer.get(l).addAxon(axon);
+                            prevLayer.get(m).addAxon(axon);
                         }
                     }
+
+                    // Move on to the next layer.
                     hiddenNeurons.add(currLayer);
                     prevLayer = currLayer;
                 }
 
+                // Connect the last layer of hidden neurons to the output
+                // neurons.
                 for(int n = 0; n < prevLayer.size(); n++) {
                     for(int m = 0; m < outputNeurons.size(); m++) {
-                        prevLayer.get(n).connect(outputNeurons.get(m));
+                        Axon axon = new Axon(prevLayer.get(n), outputNeurons.get(m));
+                        prevLayer.get(n).addAxon(axon);
+                        outputNeurons.get(m).addAxon(axon);
                     }
                 }
             }
@@ -95,25 +117,63 @@ public class NeuralNetwork {
      * Postconditions: The neural network will be able to approximate the
      * underlying function of a set of data.
      */
-    public NeuralNetwork learn(List<PointN> points) {
+    public void learn(List<PointN> points) {
         // The value used to adjust weights.
-        double delta = 0.0;
+        double delta = 0;
+        error = 0.5;
+        // The previous error.
+        double prevError = 0.5;
+        // The current error.
+        double currError = 0;
 
         // Initialise all the weights to random values between -1.0 and 1.0.
-        for (Neuron n : inputNeurons) {
-            n.setWeight(Random.randomFloat(-1, 1));
+        for (int i = 0; i < inputNeurons.size(); i++) {
+            for (int j = 0; j < inputNeurons.get(i).numAxons(); j++) {
+                inputNeurons.get(i).getAxon(j).setWeight(Random.randomFloat(-1, 1));
+            }
         }
-        for (Neuron n : outputNeurons) {
-            n.setWeight(Random.randomFloat(-1, 1));
+        for (int i = 0; i < outputNeurons.size(); i++) {
+            for (int j = 0; j < outputNeurons.get(i).numAxons(); j++) {
+                outputNeurons.get(i).getAxon(j).setWeight(Random.randomFloat(-1, 1));
+            }
         }
-        for (List<Neuron> l : hiddenNeurons) {
-            for (Neuron n : hiddenNeurons.get(hiddenNeurons.indexOf(l))) {
-                n.setWeight(Random.randomFloat(-1, 1));
+        for (int i = 0; i < hiddenNeurons.size(); i++) {
+            for (int j = 0; j < hiddenNeurons.get(i).size(); j++) {
+                for (int k = 0; k < hiddenNeurons.get(i).get(j).numAxons(); k++) {
+                    hiddenNeurons.get(i).get(j).getAxon(k).setWeight(Random.randomFloat(-1, 1));
+                }
             }
         }
 
-        // Do something else...
+        while (Math.abs(prevError - currError) >= error) {
+            // Go through each point in the points list and propogate the
+            // inputs forward.
+            for (PointN p : points) {
+                // Assign the x-values to the input layers.
+                for (int i = 0; i < inputNeurons.size(); i++) {
+                    inputNeurons.get(i).receiveActionPotential(p.getX(i));
+                }
 
-        return this;
+                // Send the action potential for each of the input neurons to its connected neurons.
+                for (int i = 0; i < inputNeurons.size(); i++) {
+                    inputNeurons.get(i).sendActionPotential();
+                }
+
+                // Assign values to the hidden layers.
+                for (int i = 0; i < hiddenNeurons.size(); i++) {
+                    for (int j = 0; j < hiddenNeurons.get(i).size(); j++) {
+                        hiddenNeurons.get(i).get(j).sendActionPotential();
+                    }
+                }
+
+                // Assign the values to the output layer.
+                for (int i = 0; i < outputNeurons.size(); i++) {
+                    outputNeurons.get(i).sendActionPotential();
+                }
+
+                prevError = 0;
+                currError = 0.4;
+            }
+        }
     }
 }

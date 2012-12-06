@@ -14,9 +14,9 @@ import java.util.List;
  * N-dimensional point.
  */
 public class PointN {
-    // X-value.
+    // X-values.
     private List<Double> x;
-    // Y-value.
+    // Y-values.
     private List<Double> y;
 
     public PointN(double[] X, double[] Y) {

@@ -1,38 +1,108 @@
 /**
- * This file contains the Neuron interface which has the most basic actions
+ * This file contains the Neuron class which has the most basic actions
  * needed by a Neuron in the Neural Network. 
  *
  * Author: Cameron Vincent Chaparro.
  * Date: 23 November 2012
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * The Neuron interface "defines" how a neuron should behave when connecting
+ * The Neuron class "defines" how a neuron should behave when connecting
  * to, or disconnecting from, another neuron in the network; and how the neuron
  * should behave when sending or receiving an action potential from another
  * neuron in the network.
  */
-public interface Neuron {
-    /**
-     * Connect two neurons to each other, and return an Axon object which
-     * contains the connection information.
-     *
-     * Preconditions: None.
-     * Postconditions: If the neurons are already connected to each other, this
-     * function will not do anything and return false. If they are not connected
-     * a new connection will be created and true will be returned.
-     */
-    public boolean connect(Neuron other);
+public class Neuron {
+    // The activation function that will be used to determine when to send an
+    // action potential to the neurons connected to this neuron.
+    private Activation activation;
+    // A list of Axons we have between other neurons and ourselves.
+    private List<Axon> axons;
+    // The bias for the neuron.
+    private double bias;
+    // The initial input value.
+    private double input;
+
+    public Neuron() {
+        // Actually for the list we will create it but, obviously, not put
+        // anything in it yet.
+        this.axons = new ArrayList<Axon>();
+
+        // The input will be zero.
+        this.bias = 0.0;
+        this.input = 0.0;
+    }
 
     /**
-     * Disconnect two neurons from each other.
+     * Initialise all instance variables to the values of the specified
+     * parameters.
      *
-     * Preconditions: The neurons must already be connnected to each other.
-     * Also, the neurons cannot be the same.
-     * Postconditions: The neurons will be disconnected. True will be returned
-     * if the 'disconnection' is successful; false otherwise.
+     * Preconditions: None.
+     * Postconditions: A new Neuron object will be initialsed.
      */
-    public boolean disconnect(Neuron other);
+    public Neuron(List<Axon> axons, Activation activation, double input, double bias) {
+        //// --- BEGIN ERROR CHECKING --- ////
+        // Is the axons list equal to null?
+        if (axons == null) {
+            this.axons = new ArrayList<Axon>();
+        }
+        else {
+            this.axons = axons;
+        }
+
+        // Is the activation null?
+        if (activation == null) {
+            this.activation = new Sigmoid();
+        }
+        else {
+            this.activation = activation;
+        }
+        //// --- END ERROR CHECKING --- ////
+
+        // Initialize input and bias.
+        this.bias = bias;
+        this.input = input;
+    }
+
+    /**
+     * Adds an axon (a connection) to the list of axons.
+     *
+     * Preconditions: The axon cannot be null.
+     * Postconditions: The axon will be added to the list of axons.
+     */
+    public void addAxon(Axon axon) {
+        axons.add(axon);
+    }
+
+    /**
+     * Returns the axon at the specified index.
+     *
+     * Preconditions: The index must be greater than 0 and less than the size of
+     * the axons list (which will be the number of connections between this
+     * neuron and any other neuron).
+     * Postconditions: The axon at the specified index of the list will be
+     * returned.
+     */
+    public Axon getAxon(int index) {
+        if (index >= 0 && index < axons.size()) {
+            return (axons.get(index));
+        }
+        return null;
+    }
+
+    /**
+     * Returns the number of axons (connections) between the current neuron and
+     * any other neurons it is connected to.
+     *
+     * Preconditions: None.
+     * Postconditions: The number of axons in the axons list will be returned.
+     */
+    public int numAxons() {
+        return (axons.size());
+    }
 
     /**
      * Sends an action potential (a "signal") to the specified, connected,
@@ -45,7 +115,14 @@ public interface Neuron {
      * received the action potential. If nothing is received, however, false
      * will be returned.
      */
-    public boolean sendActionPotentialTo();
+    public boolean sendActionPotential() {
+        double potential = this.evaluate();
+        for(Axon axon : axons) {
+            axon.sendActionPotential(potential);
+        }
+        return true;
+
+    }
 
     /**
      * Receives an action potential (a "signal") sent by another neuron. (When
@@ -56,7 +133,10 @@ public interface Neuron {
      * Postconditions: True will be returned upon completion of processing the
      * action potential. If any type of error occurs, false will be returned.
      */
-    public boolean receiveActionPotentialFrom(double actionPotential);
+    public boolean receiveActionPotential(double actionPotential) {
+        this.input += actionPotential;
+        return true;
+    }
 
     /**
      * Evaluates the Neuron's action potential using an activation function.
@@ -68,24 +148,32 @@ public interface Neuron {
      * Then a new action potential value will be returned after being evaluated
      * using the sigmoid function.
      */
-    public double evaluate(double oldActionPotential);
+    public double evaluate() {
+        return (activation.activate(input));
+    }
 
     /**
-     * Sets the neuron's weight. Used during the execution of the learning
-     * algorithm.
+     * Sets the bias for a neuron. An important thing to remember with the bias
+     * is that InputNeurons do not make use of a bias value, so for them, this
+     * function does not do anything.
      *
      * Preconditions: None.
-     * Postconditions: The neuron's weight will be updated with the new value
-     * specified by the user.
+     * Postconditions: The bias value will be updated for HiddenNeurons and
+     * OutputNeurons; nothing will happen for InputNeurons.
      */
-    public void setWeight(double weight);
+    public void setBias(double bias) {
+        this.bias = bias;
+    }
 
     /**
-     * Returns the neuron's weight. Used during the execution of the learning
-     * algorithm.
+     * Returns the bias value for a neuron. Again, it is important to note that
+     * this function is not meaningful in the InputNeuron class.
      *
      * Preconditions: None.
-     * Postconditions: The neuron's weight will be returned.
+     * Postconditions: The bias value will be returned for HiddenNeurons and
+     * OutputNeurons; 0 will be returned for InputNeurons.
      */
-    public double getWeight();
+    public double getBias() {
+        return (this.bias);
+    }
 }
