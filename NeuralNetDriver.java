@@ -6,6 +6,9 @@
  * Date: 23 November 2012
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class NeuralNetDriver {
     // Used to get keyboard input from the user.
     private final static Keyboard kb = Keyboard.getKeyboard();
@@ -62,7 +65,9 @@ public class NeuralNetDriver {
             // Check usrInput for the sentinel value.
             if (usrInput.equalsIgnoreCase("Q") ||
                 usrInput.equalsIgnoreCase("QUIT")) {
+                file = null;
                 done = true;
+                System.out.println();
             }
             // Open the specified file.
             else {
@@ -77,22 +82,23 @@ public class NeuralNetDriver {
         if (file != null) {
             // Confirm that the file was opened.
             System.out.println("\n" + usrInput + " was opened.");
-        }
 
-        // Process the file.
-        ann = processFile(file);
+            // Process the file.
+            ann = parseInitFile(file);
 
-        if (ann != null) {
-            System.out.println("\nNetwork created.\n");
-        }
-        else {
-            System.out.println("\nThere are errors in the input file, network could not be created.\n");
+            if (ann != null) {
+                System.out.println("The network was created successfully.");
+            }
+            else {
+                System.out.println("The network could not be created.");
+            }
         }
     }
 
     /**
      * Returns a NeuralNetwork setup with the information gathered from the
      * file object that is passed in.
+     *
      * Preconditions: The file object must not be null. And the file must be
      * formatted as follows:
      * filename_with_data.ext
@@ -104,13 +110,11 @@ public class NeuralNetDriver {
      * number_of_nodes_in_hidden_layer_n (where n is the number of hidden layers)
      * learning_rate
      * error_tolerance
-     *
      * Postconditions: A new NeuralNetwork object will be returned.
      */
-    public static NeuralNetwork processFile(FileIO file) {
-        // 
+    public static NeuralNetwork parseInitFile(FileIO file) {
+        // If there is no file, do not continue.
         if (file == null) {
-            // Do not continue.
             return null;
         }
         else {
@@ -138,7 +142,7 @@ public class NeuralNetDriver {
 
             // If the file could not be opened, let the user know and quit.
             if (data == null) {
-                System.out.println("\n" + line + " could not be opened.");
+                System.out.println("\'" + line + "\' could not be opened.");
                 return null;
             }
 
@@ -146,21 +150,15 @@ public class NeuralNetDriver {
             line = file.readLine();
 
             // Convert the value to a number.
-            try {
-                numHiddenLayers = Integer.parseInt(line);
+            numHiddenLayers = convertStringToInteger(line, "\'" + line + "\' is not a valid integer.");
 
-                if (numHiddenLayers < 1) {
-                    System.out.println("\nThere must be at least one hidden layer.");
-                    return null;
-                }
-
-                // Create the numNodes array.
-                numNodes = new int[numHiddenLayers];
-            }
-            catch (NumberFormatException nfe) {
-                System.out.println("\n" + line + " is not a valid integer.");
+            if (numHiddenLayers < 1) {
+                System.out.println("There must be at least one hidden layer.");
                 return null;
             }
+
+            // Create the numNodes array.
+            numNodes = new int[numHiddenLayers];
 
             // Get numHiddenLayers number of nodes-per-layer.
             for (int i = 0; i < numHiddenLayers; i++) {
@@ -168,70 +166,261 @@ public class NeuralNetDriver {
                 line = file.readLine();
 
                 // Convert the value to an integer.
-                try {
-                    numNodes[i] = Integer.parseInt(line);
+                numNodes[i] = convertStringToInteger(line, "\'" + line + "\' is not a valid integer.");
 
-                    if (numNodes[i] < 1) {
-                        System.out.println("\nThere must be at least one node in a hidden layer.");
+                if (numNodes[i] < 1) {
+                    System.out.println("There must be at least one node in a hidden layer.");
+                    return null;
+                }
+            }
+
+            // Get the learning rate.
+            line = file.readLine();
+
+            // Convert the value to a double.
+            rate = convertStringToDouble(line, "\'" + line + "\' is not a valid double.");
+
+            // Make sure the value is positive.
+            if (rate <= 0) {
+                System.out.println("The learning rate provided, \'" + rate + "\', is invalid.");
+                return null;
+            }
+
+            // Get the learning rate.
+            line = file.readLine();
+
+            // Convert the value to a double.
+            error = convertStringToDouble(line, "\'" + line + "\' is not a valid double.");
+
+            // Make sure the error value is positive.
+            if (error <= 0) {
+                System.out.println("The error tolerance provided, \'" + error + "\', is invalid.");
+                return null;
+            }
+
+            NeuralNetwork network = new NeuralNetwork(parseDataFile(data), numHiddenLayers, numNodes, rate, error);
+
+            return network;
+        }
+    }
+
+    /**
+     * Processes the data file whose data contains an underlying function which
+     * we want to learn.
+     *
+     * Preconditions: The data file cannot be empty, or null. Also, the data file
+     * must have the following format:
+     * scale_factor
+     * number_of_input_nerons, number_of_output_neurons
+     * x_value_of_data_point_1, y_value_of_data_point_1
+     * x_value_of_data_point_2, y_value_of_data_point_2
+     * x_value_of_data_point_3, y_value_of_data_point_3
+     *        ...
+     * x_value_of_data_point_n, y_value_of_data_point_n
+     * Postconditions: The data file will be processed and a FileData class will
+     * be returned containing n elements.
+     * If the file contains valid data...
+     * The 1st element contains: number_of_input_neurons
+     * The 2nd element contains: number_of_output_neurons
+     * The 3rd element contains: list_of_PointN_data_points
+     * Otherwise...
+     * Null will be returned.
+     */
+    public static FileData parseDataFile(FileIO data) {
+        // If there is no data file, do not continue.
+        if (data == null) {
+            return null;
+        }
+        else {
+            // The value that will be used to scale the data points.
+            double scale = 0.0;
+
+            // The list of data points read in.
+            ArrayList<PointN> points = new ArrayList<PointN>();
+
+            // Stores all the data provided in the 'data' file that is needed
+            // by the neural network.
+            FileData fData = new FileData();
+
+            // Stores the string read from the file.
+            String line = "";
+
+            // Get the scale value.
+            line = data.readLine();
+
+            // Convert the value to a double.
+            scale = convertStringToDouble(line, "\'" + line + "\' is not a valid double.");
+
+            // Make sure the scale is a reasonable value.
+            if (scale <= 0) {
+                System.out.println("The scale provided, \'" + scale + "\', is invalid.");
+                return null;
+            }
+
+            // Get the number of input neurons and output neurons.
+            line = data.readLine();
+
+            // Convert the number of neurons to a number.
+            String[] numNeurons = null;
+
+            // Split line into number of input neurons and number of output neurons.
+            if (line != null) {
+                numNeurons = line.split(",");
+            }
+            else {
+                System.out.println("The number of input / output neurons provided, \'" + line + "\', is invalid.");
+                return null;
+            }
+
+            // Holds the number of input neurons.
+            int numInput = 0;
+            // Holds the number of output neurons.
+            int numOutput = 0;
+
+            if (numNeurons.length == 2) {
+                if (numNeurons[0] != null) {
+                    // Convert the string containing the number of input neurons to an integer.
+                    numInput = convertStringToInteger(numNeurons[0], "\'" + numNeurons[0] + "\' is invalid.");
+
+                    // Make sure there is at least one input neuron specified.
+                    if (numInput <= 0) {
+                        System.out.println("The number of input neurons provided, \'" + numNeurons[0] + "\',is invalid");
                         return null;
                     }
-                }
-                catch (NumberFormatException nfe) {
-                    System.out.println("\n" + line + " is not a valid integer.");
-                    return null;
-                }
-            }
 
-            // Get the learning rate.
-            line = file.readLine();
-
-            // Convert the value to a double.
-            try {
-                if (line != null) {
-                    rate = Double.parseDouble(line);
+                    // Add the number of input neurons to the collection in fData.
+                    fData.addData(numInput);
                 }
                 else {
-                    throw new NumberFormatException(line);
-                }
-
-                if (rate < 0) {
-                    System.out.println("\nThe learning rate provided (" + rate + ") is invalid.");
+                    System.out.println("\'" + numNeurons[1] + "\' is formatted improperly.");
                     return null;
                 }
-            }
-            catch (NumberFormatException nfe) {
-                System.out.println("\n" + line + " is not a valid double.");
-                return null;
-            }
-            
-            // Get the learning rate.
-            line = file.readLine();
 
-            // Convert the value to a double.
-            try {
-                if (line != null) {
-                    error = Double.parseDouble(line);
+                if (numNeurons[1] != null) {
+                    // Convert the string containing the number of output neurons to an integer.
+                    numOutput = convertStringToInteger(numNeurons[1], "\'" + numNeurons[1] + "\' is invalid.");
+
+                    // Make sure there is at least one input neuron specified.
+                    if (numOutput <= 0) {
+                        System.out.println("The number of output neurons provided, \'" + numNeurons[1] + "\', is invalid");
+                        return null;
+                    }
+
+                    // Add the number of input neurons to the collection in fData.
+                    fData.addData(numOutput);
                 }
                 else {
-                    throw new NumberFormatException(line);
-                }
-
-                if (error < 0) {
-                    System.out.println("\nThe learning rate provided (" + rate + ") is invalid.");
+                    System.out.println("\'" + numNeurons[1] + "\' is formatted improperly.");
                     return null;
                 }
             }
-            catch (NumberFormatException nfe) {
-                System.out.println("\n" + line + " is not a valid double.");
+            else {
+                System.out.println("\'" + line + "\' is formatted improperly.");
                 return null;
             }
 
-            return new NeuralNetwork(data, numHiddenLayers, numNodes, rate, error);
+            double[] x = new double[numInput];
+            double[] y = new double[numOutput];
+
+            // Get the data points.
+            while (!data.EOF()) {
+                // A message to the user. The pound symbol will be changed with point number.
+                String message = "The point, \'#\' was formatted improperly.";
+
+                // Get the next data point.
+                line = data.readLine();
+
+                // Make sure line is not null.
+                if (line == null) {
+                    break;
+                }
+
+                // Replace the pound symbol with the value of line that
+                // represents an invalid point.
+                message = message.replaceFirst("#", line);
+
+                // Split the seperate parts of the point.
+                String[] vals = line.split(",");
+                if (vals.length == numInput + numOutput) {
+                    // Get all the input values.
+                    for (int i = 0; i < numInput; i++) {
+                        if (!vals[i].isEmpty()) {
+                            x[i] = (convertStringToDouble(vals[i], message) / scale );
+                        }
+                        else {
+                            System.out.println(message);
+                            return null;
+                        }
+                    }
+
+                    // Get all the output values.
+                    for (int i = 0; i < numOutput; i++) {
+                        if (!vals[numInput + i].isEmpty()) {
+                            y[i] = (convertStringToDouble(vals[numInput + i], message) / scale);
+                        }
+                        else {
+                            System.out.println(message);
+                            return null;
+                        }
+                    }
+
+                    // Add the point to the list of points.
+                    points.add(new PointN(x, y));
+                }
+                else {
+                    System.out.println(message);
+                    return null;
+                }
+            }
+
+            // Add the list of data points to the collection in fData.
+            if (points != null) {
+                fData.addData(points);
+            }
+
+            return fData;
+        }
+    }
+
+    /**
+     * Converts the integer value of the specified string, or null if the value
+     * is not an integer.
+     *
+     * Preconditions: The string must have an integer value.
+     * Postconditions: The integer value of the string parameter will be returned.
+     */
+    public static Integer convertStringToInteger(String string, String prompt) {
+        // Convert the value to a number.
+        try {
+            return (Integer.parseInt(string));
+        }
+        catch (NumberFormatException nfe) {
+            System.out.println(prompt);
+            return null;
+        }
+    }
+
+    /**
+     * Converts the integer value of the specified string, or null if the value
+     * is not an integer.
+     *
+     * Preconditions: The string must have an integer value.
+     * Postconditions: The integer value of the string parameter will be returned.
+     */
+    public static Double convertStringToDouble(String string, String prompt) {
+        // Convert the value to a double.
+        try {
+            return (Double.parseDouble(string));
+        }
+        catch (NumberFormatException nfe) {
+            System.out.println(prompt);
+            return null;
         }
     }
 
     /**
      * Returns a string of user input from the keyboard.
+     *
      * Preconditions: None.
      * Postcondition: A string of the user's input will be returned.
      */

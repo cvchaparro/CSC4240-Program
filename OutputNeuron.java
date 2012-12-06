@@ -1,35 +1,43 @@
+/**
+ * This file contains the OutputNeuron class.
+ *
+ * Name: Cameron Vincent Chaparro.
+ * Date: 23 November 2012
+ */
 
-public class OutputNeuron implements Neuron {
+import java.util.ArrayList;
+import java.util.List;
 
-	@Override
-	public Axon connect(Neuron other) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+public class OutputNeuron extends Neuron {
+    // Initialise everything to "zero".
+    public OutputNeuron() {
+        super();
+    }
 
-	@Override
-	public void disconnect(Neuron other) {
-		// TODO Auto-generated method stub
+    /**
+     * Initialise all instance variables to the values of the specified
+     * parameters.
+     *
+     * Preconditions: None.
+     * Postconditions: A new OutputNeuron object will be initialsed.
+     */
+    public OutputNeuron(List<OutputAxon> axons, Activation activation, double input, double bias) {
+        super(null, activation, input, bias);
+    }
 
-	}
+    public boolean sendActionPotential() {
+        double potential = this.evaluate();
+        for(Axon axon : axons) {
+            ((OutputAxon) axon).sendActionPotential(potential);
+        }
+        return true;
+    }
 
-	@Override
-	public boolean sendActionPotentialTo() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    public void setBias(double bias) {
+        this.bias = bias;
+    }
 
-	@Override
-	public boolean receiveActionPotentialFrom(Neuron preSynaptic,
-			double actionPotential) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public double evaluate(double oldActionPotential) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
+    public double getBias() {
+        return bias;
+    }
 }

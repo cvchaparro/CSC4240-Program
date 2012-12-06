@@ -7,75 +7,104 @@
  */
 
 /**
- * The Axon class stores information regarding two connected neurons, and
- * in particular, it stores information communicated between them.
+ * The Axon class stores information regarding two connected neurons.
  */
 public class Axon {
     // The neuron that sends an action potential.
-    private Neuron preSynaptic;
+    protected Neuron preSynaptic;
     // The neuron that receives an action potential.
-    private Neuron postSynaptic;
+    protected Neuron postSynaptic;
     // The actual action potential sent by the pre-synaptic neuron.
-    private double actionPotential;
-    
-    private double scale;
+    protected double actionPotential;
+    // The scale factor that is used to scale the action potential to give it a
+    // value between 0.0 and 1.0.
+    protected double weight;
 
     // Initialises everything to "zero".
     public Axon() {
         this.preSynaptic = null;
         this.postSynaptic = null;
-        this.actionPotential = 0.0;
+        this.actionPotential = 0;
+        this.weight = 0;
     }
 
     /**
      * Initialise all instance variables to the values of the specified
      * parameters.
      *
-     * Preconditions: Neither of the pre- or post-synaptic neurons can be null.
-     * Also, they cannot be equal.
+     * Preconditions: Neither of the pre- or post-synaptic neurons can be null
+     * if the axon is connecting an input neuron to a hidden layer, a hidden
+     * layer to another hidden layer, or a hidden layer to an output layer. The
+     * pre-synaptic neuron can only be null if it is connecting an input neuron.
+     * And the post-synaptic neuron can only be null if it is connecting an
+     * output neuron. Also, the pre- and post-synaptic neruons cannot be equal.
      * Postconditions: If no errors are detected, a new Axon object will be
      * initialsed.
      */
-    public Axon(Neuron preSynaptic, Neuron postSynaptic,
-                                    double actionPotential) {
+    public Axon(Neuron preSynaptic, Neuron postSynaptic, double actionPotential, double weight) {
         //// --- BEGIN ERROR CHECKING --- ////
-        // Do either preSynaptic or postSynaptic equal null?
-        if (preSynaptic == null || postSynaptic == null) {
-            String error = "Pre-Synaptic or Post-Synaptic Neurons cannot be";
-            error += "null.";
-
-            System.out.println(error);
-
-            return;
+        // Is the pre-synaptic neuron null?
+        if (preSynaptic == null) {
+            try {
+                // Try and cast the post-synaptic neuron as an InputNeuron. If
+                // a ClassCastException is thrown, then it is not an input
+                // neuron and we should exit.
+                if (postSynaptic != null) {
+                    InputNeuron n = ((InputNeuron) preSynaptic);
+                }
+                else {
+                    throw new ClassCastException();
+                }
+            }
+            catch (ClassCastException cce) {
+                System.out.println("Pre-Synaptic neurons cannot be null for HiddenNeurons or OutputNeurons.");
+                return;
+            }
+        }
+        // Is the post-synaptic neuron null?
+        if (postSynaptic == null) {
+            try {
+                // Try and cast the post-synaptic neuron as an OutputNeuron. If
+                // a ClassCastException is thrown, then it is not an output
+                // neuron and we should exit.
+                OutputNeuron n = ((OutputNeuron) postSynaptic);
+            }
+            catch (ClassCastException cce) {
+                System.out.println("Post-Synaptic neurons cannot be null for InputNeurons or HiddenNeurons.");
+                return;
+            }
         }
 
         // Are the preSynaptic and postSynaptic neurons physically equal (i.e.
         // do the have the same memory address)?
         if (preSynaptic == postSynaptic) {
-            String error = "Pre-Synaptic and Post-Synaptic Neurons cannot be";
-            error += "equal.";
-
-            System.out.println(error);
-
-            return;
-        }
-
-        // Are the preSynaptic and postSynaptic neurons contentually equal
-        // (i.e. do the have the same contents)?
-        if (preSynaptic.equals(postSynaptic)) {
-            String error = "Pre-Synaptic and Post-Synaptic Neurons cannot be";
-            error += "equal.";
-
-            System.out.println(error);
-
+            System.out.println("Pre-Synaptic and Post-Synaptic Neurons cannot be equal.");
             return;
         }
         //// --- END ERROR CHECKING --- ////
 
-        // Initialise everything.
+        // Initialize everything.
         this.preSynaptic = preSynaptic;
         this.postSynaptic = postSynaptic;
         this.actionPotential = actionPotential;
+        this.weight = weight;
+    }
+
+    /**
+     * Initialise all instance variables to the values of the specified
+     * parameters.
+     *
+     * Preconditions: Neither of the pre- or post-synaptic neurons can be null
+     * if the axon is connecting an input neuron to a hidden layer, a hidden
+     * layer to another hidden layer, or a hidden layer to an output layer. The
+     * pre-synaptic neuron can only be null if it is connecting an input neuron.
+     * And the post-synaptic neuron can only be null if it is connecting an
+     * output neuron. Also, the pre- and post-synaptic neruons cannot be equal.
+     * Postconditions: If no errors are detected, a new Axon object will be
+     * initialsed.
+     */
+    public Axon(Neuron preSynaptic, Neuron postSynaptic) {
+        this(preSynaptic, postSynaptic, 0, 0);
     }
 
     /**
@@ -85,7 +114,7 @@ public class Axon {
      * Postconditions: The pre-synaptic neuron will be returned.
      */
     public Neuron getPreSynapticNeuron() {
-        return this.preSynaptic;
+        return (this.preSynaptic);
     }
 
     /**
@@ -95,7 +124,7 @@ public class Axon {
      * Postconditions: The post-synaptic neuron will be returned.
      */
     public Neuron getPostSynapticNeuron() {
-        return this.postSynaptic;
+        return (this.postSynaptic);
     }
 
     /**
@@ -105,7 +134,17 @@ public class Axon {
      * Postconditions: The action potential will be returned.
      */
     public double getActionPotential() {
-        return this.actionPotential;
+        return (this.actionPotential);
+    }
+
+    /**
+     * Return the weight associated with this axon.
+     *
+     * Preconditions: None.
+     * Postconditions: The weight associated with this axon will be returned.
+     */
+    public double getWeight() {
+        return (this.weight);
     }
 
     /**
@@ -122,16 +161,28 @@ public class Axon {
     }
 
     /**
+     * Set the value of weight. (This is used during the learning process.)
+     *
+     * Preconditions: None.
+     * Postconditions: The weight will be updated.
+     */
+    public void setWeight(double newWeight) {
+        // Set the new weight.
+        this.weight = newWeight;
+    }
+
+    /**
      * Sends a weighted signal to the neuron it is connected to.
      * 
-     * Preconditions: None
+     * Preconditions: PostSynaptic cannot be null.
      * Postconditions: The neuron this axon is connected to will receive a
-     * signal based on the preSynaptic neurons output and weight of the axon
+     * signal based on the preSynaptic neurons output and weight of the axon.
      */
-	public void sendActionPotential(double potential) 
-	{
-		this.getPostSynapticNeuron().receiveActionPotentialFrom(preSynaptic, 
-				potential*scale);
-	}
+    public void sendActionPotential(double actionPotential) {
+        // Send an action potential to the post-synaptic neuron.
+        if (postSynaptic != null) {
+            this.postSynaptic.receiveActionPotential(actionPotential * weight);
+        }
+    }
 }
 

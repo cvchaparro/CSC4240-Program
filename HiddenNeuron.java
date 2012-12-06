@@ -1,35 +1,27 @@
+/**
+ * This file contains the HiddenNeuron class.
+ *
+ * Name: Cameron Vincent Chaparro.
+ * Date: 23 November 2012
+ */
 
-public class HiddenNeuron implements Neuron {
+import java.util.ArrayList;
+import java.util.List;
 
-	@Override
-	public Axon connect(Neuron other) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+public class HiddenNeuron extends Neuron {
+    // Initialise everything to "zero".
+    public HiddenNeuron() {
+        super();
+    }
 
-	@Override
-	public void disconnect(Neuron other) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public boolean sendActionPotentialTo() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean receiveActionPotentialFrom(Neuron preSynaptic,
-			double actionPotential) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public double evaluate(double oldActionPotential) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
+    /**
+     * Initialise all instance variables to the values of the specified
+     * parameters.
+     *
+     * Preconditions: None.
+     * Postconditions: A new HiddenNeuron object will be initialsed.
+     */
+    public HiddenNeuron(List<Axon> axons, Activation activation, double input, double bias) {
+        super(axons, activation, input, bias);
+    }
 }
