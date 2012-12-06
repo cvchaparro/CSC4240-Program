@@ -6,7 +6,9 @@
  * Date: 3 December 2012
  */
 
+import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.List;
 import java.lang.Math;
 
@@ -32,7 +34,7 @@ public class NeuralNetwork {
         List<Neuron> prevLayer = inputNeurons;
 
         if (data != null) {
-            if (data.numItems() == 4) {
+            if (data.numItems() == 3) {
                 list = data.getAllData();
 
                 // Make sure the list is not null.
@@ -40,24 +42,20 @@ public class NeuralNetwork {
                     list = new ArrayList<Object>();
                     list.add(-1);
                     list.add(-1);
-                    list.add(-1);
                     list.add(null);
                     valid = false;
                 }
 
-                // Get the scale factor.
-                scale = ((Double) list.get(0));
-
                 // Get the number of input neurons, and add that many
                 // InputNeuron objects to the inputNeurons list.
-                int numInput = ((Integer) list.get(1));
+                int numInput = ((Integer) list.get(0));
                 for(int n = 0; n < numInput; n++) {
                     inputNeurons.add(new InputNeuron());
                 }
 
                 // Get the number of output neurons, and add that many
                 // OutputNeuron objects to the outputNeurons list.
-                int numOutput = ((Integer) list.get(2));
+                int numOutput = ((Integer) list.get(1));
                 for(int n = 0; n < numOutput; n++) {
                     outputNeurons.add(new OutputNeuron());
                 }
@@ -72,12 +70,11 @@ public class NeuralNetwork {
                     }
 
                     // Connect the previous layer of neurons to the current
-                    // layer of hidden neurons.
+                    // layer of hidden neurons, except for the output neurons.
                     for(int m = 0; m < prevLayer.size(); m++) {
                         for(int l = 0; l < currLayer.size(); l++) {
                             Axon axon = new Axon(prevLayer.get(m), currLayer.get(l));
                             currLayer.get(l).addAxon(axon);
-                            prevLayer.get(m).addAxon(axon);
                         }
                     }
 
@@ -92,8 +89,11 @@ public class NeuralNetwork {
                     for(int m = 0; m < outputNeurons.size(); m++) {
                         Axon axon = new Axon(prevLayer.get(n), outputNeurons.get(m));
                         prevLayer.get(n).addAxon(axon);
-                        outputNeurons.get(m).addAxon(axon);
                     }
+                }
+
+                for (int i = 0; i < outputNeurons.size(); i++) {
+                    outputNeurons.get(i).addAxon(new OutputAxon(outputNeurons.get(i), null));
                 }
             }
         }
@@ -105,7 +105,7 @@ public class NeuralNetwork {
         this.error = error;
 
         if (valid) {
-            List<PointN> points = ((List<PointN>) list.get(3));
+            List<PointN> points = ((List<PointN>) list.get(2));
             this.learn(points);
         }
     }
@@ -118,29 +118,24 @@ public class NeuralNetwork {
      * underlying function of a set of data.
      */
     public void learn(List<PointN> points) {
-        // The value used to adjust weights.
-        double delta = 0;
-        error = 0.5;
-        // The previous error.
-        double prevError = 0.5;
-        // The current error.
+        // The previous errors.
+        double prevError = 0;
+        // The current errors.
         double currError = 0;
+        double rangeMin = -0.1;
+        double rangeMax =  0.1;
+        Random random = new Random();
 
         // Initialise all the weights to random values between -1.0 and 1.0.
         for (int i = 0; i < inputNeurons.size(); i++) {
             for (int j = 0; j < inputNeurons.get(i).numAxons(); j++) {
-                inputNeurons.get(i).getAxon(j).setWeight(Random.randomFloat(-1, 1));
-            }
-        }
-        for (int i = 0; i < outputNeurons.size(); i++) {
-            for (int j = 0; j < outputNeurons.get(i).numAxons(); j++) {
-                outputNeurons.get(i).getAxon(j).setWeight(Random.randomFloat(-1, 1));
+                inputNeurons.get(i).getAxon(j).setWeight(new Double(rangeMin + (rangeMax - rangeMin) * random.nextDouble()));
             }
         }
         for (int i = 0; i < hiddenNeurons.size(); i++) {
             for (int j = 0; j < hiddenNeurons.get(i).size(); j++) {
                 for (int k = 0; k < hiddenNeurons.get(i).get(j).numAxons(); k++) {
-                    hiddenNeurons.get(i).get(j).getAxon(k).setWeight(Random.randomFloat(-1, 1));
+                    hiddenNeurons.get(i).get(j).getAxon(k).setWeight(new Double(rangeMin + (rangeMax - rangeMin) * random.nextDouble()));
                 }
             }
         }
@@ -171,9 +166,42 @@ public class NeuralNetwork {
                     outputNeurons.get(i).sendActionPotential();
                 }
 
-                prevError = 0;
-                currError = 0.4;
+                // Update the deltas for the output nodes.
+                for (int i = 0; i < outputNeurons.size(); i++) {
+                    double delta = (outputNeurons.get(i).getPrime() * (p.getY(i) - outputNeurons.get(i).evaluate()));
+                    outputNeurons.get(i).setDelta(delta);
+                    outputNeurons.get(i).setBias(outputNeurons.get(i).getBias() + (rate * delta));
+                }
+
+                // Reverse the list so we can go from the back towards the input neurons.
+                Collections.reverse(hiddenNeurons);
+
+                // Update the deltas for the hidden nodes.
+                for (List<Neuron> layer : hiddenNeurons) {
+                    for (Neuron n : layer) {
+                        double sum = 0;
+                        for (Axon axon : n.getAllAxons()) {
+                            sum += (axon.getWeight() * axon.getPostSynapticNeuron().getDelta());
+                        }
+                        double prime = n.getPrime();
+                        n.setDelta(prime * sum);
+                        n.setBias(((prime * sum) * rate) + n.getBias());
+                    }
+                    }
+
+                // Re-reverse the list.
+                Collections.reverse(hiddenNeurons);
+
+                // Update the weights.
+                //for (
+
+                for(int i = 0; i < p.numY(); i++)
+                {
+                    double actualY = p.getY(i);
+                    double predictedY = ((OutputAxon) outputNeurons.get(i).getAxon(0)).getPostSynaptic();
+                    currError += Math.abs(actualY - predictedY);
+                    System.out.println("actual y:    " + actualY);
+                    System.out.println("predicted y: " + predictedY + "\n");
+                }
             }
-        }
-    }
 }

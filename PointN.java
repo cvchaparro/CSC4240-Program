@@ -47,4 +47,12 @@ public class PointN {
 
         return 0;
     }
+
+    public int numX() {
+        return (x.size());
+    }
+
+    public int numY() {
+        return (y.size());
+    }
 }

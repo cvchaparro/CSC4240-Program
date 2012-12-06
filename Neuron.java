@@ -7,6 +7,7 @@
  */
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.List;
 
 /**
@@ -18,22 +19,28 @@ import java.util.List;
 public class Neuron {
     // The activation function that will be used to determine when to send an
     // action potential to the neurons connected to this neuron.
-    private Activation activation;
+    protected Activation activation;
     // A list of Axons we have between other neurons and ourselves.
-    private List<Axon> axons;
+    protected List<Axon> axons;
     // The bias for the neuron.
-    private double bias;
+    protected double bias;
     // The initial input value.
-    private double input;
+    protected double input;
+    // The delta.
+    protected double delta;
 
     public Neuron() {
         // Actually for the list we will create it but, obviously, not put
         // anything in it yet.
         this.axons = new ArrayList<Axon>();
+        this.activation = new Sigmoid();
+
+        Random random = new Random();
 
         // The input will be zero.
-        this.bias = 0.0;
-        this.input = 0.0;
+        this.bias = new Double(-0.1 + 0.2 * random.nextDouble());
+        this.input = 0;
+        this.delta = 0;
     }
 
     /**
@@ -65,6 +72,7 @@ public class Neuron {
         // Initialize input and bias.
         this.bias = bias;
         this.input = input;
+        this.delta = 0;
     }
 
     /**
@@ -91,6 +99,10 @@ public class Neuron {
             return (axons.get(index));
         }
         return null;
+    }
+
+    public List<Axon> getAllAxons() {
+        return (this.axons);
     }
 
     /**
@@ -121,7 +133,6 @@ public class Neuron {
             axon.sendActionPotential(potential);
         }
         return true;
-
     }
 
     /**
@@ -149,7 +160,11 @@ public class Neuron {
      * using the sigmoid function.
      */
     public double evaluate() {
-        return (activation.activate(input));
+        return (activation.activate(input + bias));
+    }
+
+    public double getPrime() {
+        return (activation.prime(input + bias));
     }
 
     /**
@@ -175,5 +190,13 @@ public class Neuron {
      */
     public double getBias() {
         return (this.bias);
+    }
+
+    public void setDelta(double delta) {
+        this.delta = delta;
+    }
+
+    public double getDelta() {
+        return (this.delta);
     }
 }

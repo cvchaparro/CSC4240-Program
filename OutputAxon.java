@@ -10,22 +10,14 @@
  * The Axon class stores information regarding two connected neurons.
  */
 public class OutputAxon extends Axon {
-    // The neuron that sends an action potential.
-    private Neuron preSynaptic;
-    // Contains the output of the neuron.
-    private double postSynaptic;
-    // The actual action potential sent by the pre-synaptic neuron.
-    private double actionPotential;
-    // The scale factor that is used to scale the action potential to give it a
-    // value between 0.0 and 1.0.
-    private double weight;
+    // The output of this output node.
+    private double output;
 
     // Initialises everything to "zero".
     public OutputAxon() {
-        this.preSynaptic = null;
-        this.postSynaptic = 0;
-        this.actionPotential = 0;
-        this.weight = 0;
+        super();
+        output = 0;
+        weight = 1;
     }
 
     /**
@@ -43,6 +35,7 @@ public class OutputAxon extends Axon {
      */
     public OutputAxon(Neuron preSynaptic, Neuron postSynaptic, double actionPotential, double weight) {
         super(preSynaptic, null, actionPotential, weight);
+        output = 1;
     }
 
     /**
@@ -59,10 +52,8 @@ public class OutputAxon extends Axon {
      * initialsed.
      */
     public OutputAxon(Neuron preSynaptic, Neuron postSynaptic) {
-        this(preSynaptic, null, 0, 0);
+        this(preSynaptic, null, 0, 1);
     }
-
-    public Neuron getPostSynapticNeuron() {}
 
     /**
      * Return the value returned by the output neuron.
@@ -71,11 +62,11 @@ public class OutputAxon extends Axon {
      * Postconditions: The value of the output of the output neuron will be returned.
      */
     public double getPostSynaptic() {
-        return (this.postSynaptic);
+        return (this.output);
     }
 
     public void sendActionPotential(double actionPotential) {
         // Send an action potential to the post-synaptic neuron.
-        this.postSynaptic = (actionPotential * weight);
+        this.output = actionPotential;
     }
 }

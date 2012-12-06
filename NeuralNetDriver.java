@@ -220,10 +220,9 @@ public class NeuralNetDriver {
      * Postconditions: The data file will be processed and a FileData class will
      * be returned containing n elements.
      * If the file contains valid data...
-     * The 1st element contains: scale_factor
-     * The 2nd element contains: number_of_input_neurons
-     * The 3rd element contains: number_of_output_neurons
-     * The 4th element contains: list_of_PointN_data_points
+     * The 1st element contains: number_of_input_neurons
+     * The 2nd element contains: number_of_output_neurons
+     * The 3rd element contains: list_of_PointN_data_points
      * Otherwise...
      * Null will be returned.
      */
@@ -257,9 +256,6 @@ public class NeuralNetDriver {
                 System.out.println("The scale provided, \'" + scale + "\', is invalid.");
                 return null;
             }
-
-            // Add the scale factor to the collection in fData.
-            fData.addData(scale);
 
             // Get the number of input neurons and output neurons.
             line = data.readLine();
@@ -349,7 +345,7 @@ public class NeuralNetDriver {
                     // Get all the input values.
                     for (int i = 0; i < numInput; i++) {
                         if (!vals[i].isEmpty()) {
-                            x[i] = convertStringToDouble(vals[i], message);
+                            x[i] = (convertStringToDouble(vals[i], message) / scale );
                         }
                         else {
                             System.out.println(message);
@@ -358,9 +354,9 @@ public class NeuralNetDriver {
                     }
 
                     // Get all the output values.
-                    for (int i = numInput; i < numOutput; i++) {
-                        if (!vals[i].isEmpty()) {
-                            y[i] = convertStringToDouble(vals[i], message);
+                    for (int i = 0; i < numOutput; i++) {
+                        if (!vals[numInput + i].isEmpty()) {
+                            y[i] = (convertStringToDouble(vals[numInput + i], message) / scale);
                         }
                         else {
                             System.out.println(message);

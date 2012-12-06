@@ -11,14 +11,14 @@
  */
 public class Axon {
     // The neuron that sends an action potential.
-    private Neuron preSynaptic;
+    protected Neuron preSynaptic;
     // The neuron that receives an action potential.
-    private Neuron postSynaptic;
+    protected Neuron postSynaptic;
     // The actual action potential sent by the pre-synaptic neuron.
-    private double actionPotential;
+    protected double actionPotential;
     // The scale factor that is used to scale the action potential to give it a
     // value between 0.0 and 1.0.
-    private double weight;
+    protected double weight;
 
     // Initialises everything to "zero".
     public Axon() {
