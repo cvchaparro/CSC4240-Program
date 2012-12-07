@@ -13,8 +13,6 @@ public class NeuralNetDriver {
     // Used to get keyboard input from the user.
     private final static Keyboard kb = Keyboard.getKeyboard();
 
-    private static double scale = 0;
-
     /**
      * Execution starts here: The user will be prompted to enter the name of a
      * text file containing data. Also, the ANN will be set up.
@@ -199,14 +197,8 @@ public class NeuralNetDriver {
                 System.out.println("The error tolerance provided, \'" + error + "\', is invalid.");
                 return null;
             }
-            FileData fData = parseDataFile(data);
-            double tmpError = error;
-            // If the error is not scaled, scale it.
-            if (error > 1) {
-                tmpError /= scale;
-            }
 
-            NeuralNetwork network = new NeuralNetwork(fData, numHiddenLayers, numNodes, rate, error);
+            NeuralNetwork network = new NeuralNetwork(parseDataFile(data), numHiddenLayers, numNodes, rate, error);
 
             return network;
         }
@@ -240,6 +232,9 @@ public class NeuralNetDriver {
             return null;
         }
         else {
+            // The value that will be used to scale the data points.
+            double scale = 0.0;
+
             // The list of data points read in.
             ArrayList<PointN> points = new ArrayList<PointN>();
 
@@ -350,7 +345,7 @@ public class NeuralNetDriver {
                     // Get all the input values.
                     for (int i = 0; i < numInput; i++) {
                         if (!vals[i].isEmpty()) {
-                            x[i] = (convertStringToDouble(vals[i], message));
+                            x[i] = (convertStringToDouble(vals[i], message) / scale );
                         }
                         else {
                             System.out.println(message);

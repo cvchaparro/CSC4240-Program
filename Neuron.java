@@ -199,4 +199,14 @@ public class Neuron {
     public double getDelta() {
         return (this.delta);
     }
+
+	public double getInput() {
+		// TODO Auto-generated method stub
+		return input;
+	}
+
+	public void clearInput() {
+		input = 0;
+		
+	}
 }

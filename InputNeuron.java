@@ -14,6 +14,7 @@ public class InputNeuron extends Neuron {
     // Initialise everything to "zero".
     public InputNeuron() {
         super();
+        activation = new Sigmoid();
     }
 
     public InputNeuron(List<Axon> axons, Activation activation, double input) {
@@ -21,7 +22,14 @@ public class InputNeuron extends Neuron {
     }
 
     @Override
+    public double evaluate()
+    {
+    	return input;
+    }
+    
+    @Override
     public boolean sendActionPotential() {
+    	//System.out.println("Sending inputs to " + axons.size() + " neurons");
         for(Axon axon : axons) {
             axon.sendActionPotential(input);
         }
