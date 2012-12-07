@@ -204,4 +204,9 @@ public class Neuron {
 		// TODO Auto-generated method stub
 		return input;
 	}
+
+	public void clearInput() {
+		input = 0;
+		
+	}
 }

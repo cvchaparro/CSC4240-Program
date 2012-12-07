@@ -14,7 +14,7 @@ public class InputNeuron extends Neuron {
     // Initialise everything to "zero".
     public InputNeuron() {
         super();
-        activation = new Identity();
+        activation = new Sigmoid();
     }
 
     public InputNeuron(List<Axon> axons, Activation activation, double input) {
