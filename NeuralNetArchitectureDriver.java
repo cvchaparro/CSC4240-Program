@@ -74,27 +74,105 @@ public class NeuralNetArchitectureDriver {
         }
 
         crossValidateWrapper(points, bins, rate, error);
+
+        System.out.println("Done.");
     }
 
     public static void crossValidateWrapper(List<PointN> points, int bins, double rate, double error) {
         // Cross validation algorithm on page 710 - Figure 18.8
 
         // Error rate for the training set.
-        double[] error = new double[2];
+        double[] errors = new double[2];
 
         // Holds the best size so far.
         int best = 0;
 
-        for (int i = 1; i < Infinity; i++) {
-            error = crossValidate(points, i, bins);
+        for (int i = 1; i <= 1; i++) {
+            errors = crossValidate(points, i, bins);
 
-            if (Math.abs(error[0]) < error) {
-                best = 
+            if (Math.abs(errors[0]) < error) {
+                //best = 
             }
         }
     }
 
-    public static double[] crossValidate(points, size, bins) {
-        System.out.println("Cross validating...");
+    public static double[] crossValidate(List<PointN> points, int size, int bins) {
+        double errT = 0, errV = 0;
+        List< List<PointN> > data = null;
+
+        for (int fold = 1; fold <= 1; fold++) {//size; fold++) {
+            data = partition(points, bins);
+
+            System.out.println("\n\nTraining set...");
+            for (int i = 0; i < data.get(0).size(); i++) {
+                System.out.println("val: " + data.get(0).get(i));
+            }
+            //hypothesis = 
+        }
+
+        return new double[2];
+    }
+
+    public static List< List<PointN> > partition(List<PointN> points, int numBins) {
+        // Used to determine if an index has already been taken.
+        boolean taken = false;
+        boolean done = false;
+
+        // Holds a list of the used indices (prevents placing points in
+        // duplicated indices).
+        int[] used = new int[points.size()];
+        // Holds a random index between 0 and the size of the points list.
+        int index = 0;
+
+        // A list of bins number of PointN arrays that will represent the partitions.
+        List< List<PointN> > dataSets = new ArrayList< List<PointN> >();
+        for (int i = 0; i < numBins; i++) {
+            dataSets.add(new ArrayList<PointN>());
+        }
+
+        used[index] = -1;
+        System.out.println("numBins = " + numBins);
+        // Go through the list of "bins" and put random points in them.
+        for (int i = 0; i < points.size(); i++) {
+            for (int j = 0; j < numBins; j++) {
+                int count = 0;
+                // Make sure the generated index has not already been put into a bin.
+                while (used[index] == index || used.length == count) {
+                    // Get the next randomly generated index.
+                    index = Random.randomInt(0, points.size() - 1);
+                    count++;
+
+                    // If we have gone through all the elements in the list and
+                    // still there is no empty index, we are done.
+                    if (used.length >= count) {
+                        clear(used);
+                    }
+                }
+
+                // Mark index in the used array.
+                used[index] = index;
+                dataSets.get(j).add(points.get(index));
+            }
+        }
+        System.out.println("dataSets.size() = " + dataSets.size());
+        for (List<PointN> list : dataSets) {
+            System.out.println("\nNext bin...");
+            for (PointN point : list) {
+                for (int x = 0; x < point.numX(); x++)
+                    System.out.println("X: = " + point.getX(x));
+
+                for (int x = 0; x < point.numY(); x++)
+                    System.out.println("Y: = " + point.getY(x));
+                System.out.println();
+            }
+        }
+
+        return dataSets;
+    }
+
+    public static void clear(int[] array) {
+        for (int i = 0; i < array.length; i++) {
+            array[i] = -1;
+        }
     }
 }
