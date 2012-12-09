@@ -55,4 +55,19 @@ public class PointN {
     public int numY() {
         return (y.size());
     }
+
+    public String toString() {
+        String str = "";
+
+        for (int i = 0; i < x.size(); i++) {
+            str += ("\nX: " + x.get(i));
+        }
+        str += "\n";
+        for (int i = 0; i < y.size(); i++) {
+            str += ("\nY: " + y.get(i));
+        }
+        str += "\n\n";
+
+        return str;
+    }
 }

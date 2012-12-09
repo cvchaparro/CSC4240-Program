@@ -1,5 +1,5 @@
 solar_radiation.txt
 10
-0.1
-80.0
+0.2
+200.0
 

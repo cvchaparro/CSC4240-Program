@@ -1,7 +1,6 @@
 red_wine_quality.txt
-3
-5
-3
+2
+2
 2
 0.2
-0.01
+80

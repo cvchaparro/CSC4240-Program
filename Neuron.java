@@ -200,13 +200,12 @@ public class Neuron {
         return (this.delta);
     }
 
-	public double getInput() {
-		// TODO Auto-generated method stub
-		return input;
-	}
+    public double getInput() {
+        // TODO Auto-generated method stub
+        return input;
+    }
 
-	public void clearInput() {
-		input = 0;
-		
-	}
+    public void clearInput() {
+        input = 0;
+    }
 }

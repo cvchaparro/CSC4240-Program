@@ -4,6 +4,7 @@ import java.util.List;
 public class FileData {
     // A list of data attributes from the file.
     private List<Object> data;
+    public double scale;
 
     /**
      * Initialises a new FileData object.
@@ -11,8 +12,9 @@ public class FileData {
      * Preconditions: None.
      * Postconditions: A default-valued FileData object will be created.
      */
-    public FileData() {
+    public FileData(double scale) {
         data = new ArrayList<Object>();
+        this.scale = scale;
     }
 
     /**

@@ -2,6 +2,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NeuralNetArchitectureDriver {
+    private static double validationError = Double.MAX_VALUE;
+    private static Architecture arch = null;
 
     @SuppressWarnings("unchecked")
     public static void main(String[] args) {
@@ -19,7 +21,7 @@ public class NeuralNetArchitectureDriver {
 
         // Check the command-line arguments.
         if (args.length <= 0) {
-            System.out.println("Usage: java NeuralNetArchitectureDriver <architecture_file>");
+            //System.out.println("Usage: java NeuralNetArchitectureDriver <architecture_file>");
             return;
         }
 
@@ -27,10 +29,10 @@ public class NeuralNetArchitectureDriver {
         try {
             file = new FileIO(args[0], FileIO.FOR_READING);
 
-            System.out.println(args[0] + " was opened.");
+            //System.out.println(args[0] + " was opened.");
         }
         catch (FileIOException fioe) {
-            System.out.println(fioe);
+            //System.out.println(fioe);
             return;
         }
 
@@ -40,7 +42,7 @@ public class NeuralNetArchitectureDriver {
 
         String line = "";
         String filename = "";
-
+        FileData fData = null;
         try {
             // Get the filename of the file with the data points.
             line = file.readLine();
@@ -52,9 +54,8 @@ public class NeuralNetArchitectureDriver {
             // Open the data file.
             FileIO data = new FileIO(line, FileIO.FOR_READING);
 
-            FileData fData = NeuralNetDriver.parseDataFile(data);
+            fData = NeuralNetDriver.parseDataFile(data);
             points = ((List<PointN>) fData.getData(2));
-
 
             // Get the number of cross-validation bins.
             line = file.readLine();
@@ -73,106 +74,113 @@ public class NeuralNetArchitectureDriver {
             return;
         }
 
-        crossValidateWrapper(points, bins, rate, error);
+        oneHiddenLayer(points, bins, rate, error, fData.scale);
 
-        System.out.println("Done.");
+        twoHiddenLayers(points, bins, rate, error, fData.scale);
+
+        System.out.println("K-Fold Cross Validation Error: " + validationError);
+        System.out.println(arch);
     }
 
-    public static void crossValidateWrapper(List<PointN> points, int bins, double rate, double error) {
-        // Cross validation algorithm on page 710 - Figure 18.8
+    public static void oneHiddenLayer(List<PointN> points, int numBins, double rate, double error, double scale) {
+        int[] neuronsPerLayer = new int[1];
 
-        // Error rate for the training set.
-        double[] errors = new double[2];
-
-        // Holds the best size so far.
-        int best = 0;
-
-        for (int i = 1; i <= 1; i++) {
-            errors = crossValidate(points, i, bins);
-
-            if (Math.abs(errors[0]) < error) {
-                //best = 
+        for (int i = 0; i < 5;) {
+            neuronsPerLayer[0] = ++i;
+            NeuralNetwork ann = new NeuralNetwork(points.get(0).numX(), points.get(0).numY(), points, neuronsPerLayer.length, neuronsPerLayer, rate, error, scale);
+            double tmp = crossValidate(ann, points, numBins);
+            if (tmp <= validationError) {
+                validationError = tmp;
+                arch = new Architecture(1, neuronsPerLayer);
             }
         }
     }
 
-    public static double[] crossValidate(List<PointN> points, int size, int bins) {
-        double errT = 0, errV = 0;
-        List< List<PointN> > data = null;
+    public static void twoHiddenLayers(List<PointN> points, int numBins, double rate, double error, double scale) {
+        int[] neuronsPerLayer = new int[2];
 
-        for (int fold = 1; fold <= 1; fold++) {//size; fold++) {
-            data = partition(points, bins);
-
-            System.out.println("\n\nTraining set...");
-            for (int i = 0; i < data.get(0).size(); i++) {
-                System.out.println("val: " + data.get(0).get(i));
+        for (int i = 0; i < neuronsPerLayer.length;) {
+            neuronsPerLayer[0] = ++i;
+            for (int j = 0; j < 5;) {
+                neuronsPerLayer[1] = ++j;
+                NeuralNetwork ann = new NeuralNetwork(points.get(0).numX(), points.get(0).numY(), points, neuronsPerLayer.length, neuronsPerLayer, rate, error, scale);
+                double tmp = crossValidate(ann, points, numBins);
+                if (tmp <= validationError) {
+                    validationError = tmp;
+                    arch = new Architecture(2, neuronsPerLayer);
+                }
             }
-            //hypothesis = 
+        }
+    }
+
+    public static double crossValidate(NeuralNetwork ann, List<PointN> points, int numBins) {
+        List< List<PointN> > partitioned = partition(points, numBins);
+        List<Double> predicted = null;
+        double valError = 0;
+
+        for (int validationBin = 0; validationBin < numBins; validationBin++) {
+            for (List<PointN> bin : partitioned) {
+                if (partitioned.indexOf(bin) != validationBin) {
+                    ann.learn(bin);
+                }
+            }
+
+            List<Double> inputs = new ArrayList<Double>();
+            for (int i = 0; i < partitioned.get(validationBin).size(); i++) {
+                for (int j = 0; j < partitioned.get(validationBin).get(i).numX(); j++) {
+                    inputs.add(partitioned.get(validationBin).get(i).getX(j));
+                }
+            }
+
+            predicted = ann.evaluate(inputs);
+
+            for (int i = 0; i < points.size(); i++) {
+                if (partitioned.get(validationBin).contains(points.get(i))) {
+                    for (int ptIndex = 0; ptIndex < partitioned.get(validationBin).size(); ptIndex++) {
+                        for (int j = 0; j < points.get(i).numY(); j++) {
+                            double actualY = points.get(i).getY(j);
+                            double predictedY = partitioned.get(validationBin).get(ptIndex).getY(j);
+                            valError += Math.abs(actualY - predictedY);
+                        }
+                    }
+                }
+            }
         }
 
-        return new double[2];
+        return (valError / numBins);
     }
 
     public static List< List<PointN> > partition(List<PointN> points, int numBins) {
-        // Used to determine if an index has already been taken.
-        boolean taken = false;
-        boolean done = false;
-
-        // Holds a list of the used indices (prevents placing points in
-        // duplicated indices).
-        int[] used = new int[points.size()];
-        // Holds a random index between 0 and the size of the points list.
-        int index = 0;
-
-        // A list of bins number of PointN arrays that will represent the partitions.
         List< List<PointN> > dataSets = new ArrayList< List<PointN> >();
+        List<PointN> tmpList = copy(points);
+
         for (int i = 0; i < numBins; i++) {
             dataSets.add(new ArrayList<PointN>());
         }
 
-        used[index] = -1;
-        System.out.println("numBins = " + numBins);
-        // Go through the list of "bins" and put random points in them.
-        for (int i = 0; i < points.size(); i++) {
-            for (int j = 0; j < numBins; j++) {
-                int count = 0;
-                // Make sure the generated index has not already been put into a bin.
-                while (used[index] == index || used.length == count) {
-                    // Get the next randomly generated index.
-                    index = Random.randomInt(0, points.size() - 1);
-                    count++;
+        int binIndex = 0;
 
-                    // If we have gone through all the elements in the list and
-                    // still there is no empty index, we are done.
-                    if (used.length >= count) {
-                        clear(used);
-                    }
-                }
+        while (tmpList.size() > 0) {
+            int index = Random.randomInt(0, tmpList.size() - 1);
+            dataSets.get(binIndex).add(tmpList.get(index));
+            binIndex++;
+            tmpList.remove(index);
 
-                // Mark index in the used array.
-                used[index] = index;
-                dataSets.get(j).add(points.get(index));
-            }
-        }
-        System.out.println("dataSets.size() = " + dataSets.size());
-        for (List<PointN> list : dataSets) {
-            System.out.println("\nNext bin...");
-            for (PointN point : list) {
-                for (int x = 0; x < point.numX(); x++)
-                    System.out.println("X: = " + point.getX(x));
-
-                for (int x = 0; x < point.numY(); x++)
-                    System.out.println("Y: = " + point.getY(x));
-                System.out.println();
+            if (binIndex == numBins) {
+                binIndex = 0;
             }
         }
 
         return dataSets;
     }
 
-    public static void clear(int[] array) {
-        for (int i = 0; i < array.length; i++) {
-            array[i] = -1;
+    public static List<PointN> copy(List<PointN> list) {
+        List<PointN> newList = new ArrayList<PointN>();
+
+        for (int i = 0; i < list.size(); i++) {
+            newList.add(list.get(i));
         }
+
+        return newList;
     }
 }

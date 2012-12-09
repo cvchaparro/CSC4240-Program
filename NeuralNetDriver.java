@@ -112,6 +112,7 @@ public class NeuralNetDriver {
      * error_tolerance
      * Postconditions: A new NeuralNetwork object will be returned.
      */
+    @SuppressWarnings("unchecked")
     public static NeuralNetwork parseInitFile(FileIO file) {
         // If there is no file, do not continue.
         if (file == null) {
@@ -197,8 +198,9 @@ public class NeuralNetDriver {
                 System.out.println("The error tolerance provided, \'" + error + "\', is invalid.");
                 return null;
             }
-
-            NeuralNetwork network = new NeuralNetwork(parseDataFile(data), numHiddenLayers, numNodes, rate, error);
+            FileData fData = parseDataFile(data);
+            NeuralNetwork network = new NeuralNetwork(fData, numHiddenLayers, numNodes, rate, error);
+            network.learn(((List<PointN>) fData.getData(2)));
 
             return network;
         }
@@ -240,7 +242,7 @@ public class NeuralNetDriver {
 
             // Stores all the data provided in the 'data' file that is needed
             // by the neural network.
-            FileData fData = new FileData();
+            FileData fData = null;
 
             // Stores the string read from the file.
             String line = "";
@@ -250,12 +252,14 @@ public class NeuralNetDriver {
 
             // Convert the value to a double.
             scale = convertStringToDouble(line, "\'" + line + "\' is not a valid double.");
-
+            
             // Make sure the scale is a reasonable value.
             if (scale <= 0) {
                 System.out.println("The scale provided, \'" + scale + "\', is invalid.");
                 return null;
             }
+
+            fData = new FileData(scale);
 
             // Get the number of input neurons and output neurons.
             line = data.readLine();
@@ -345,7 +349,7 @@ public class NeuralNetDriver {
                     // Get all the input values.
                     for (int i = 0; i < numInput; i++) {
                         if (!vals[i].isEmpty()) {
-                            x[i] = (convertStringToDouble(vals[i], message) / scale );
+                            x[i] = (convertStringToDouble(vals[i], message) );
                         }
                         else {
                             System.out.println(message);
@@ -378,6 +382,7 @@ public class NeuralNetDriver {
                 fData.addData(points);
             }
 
+            fData.scale = scale;
             return fData;
         }
     }
